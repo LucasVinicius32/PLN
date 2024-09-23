@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokenização e Tagging</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #000;
+            text-align: center;
+        }
+
+        h2 {
+            color: #555;
+            margin-top: 20px;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 16px;
+            resize: none;
+        }
+
+        button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #444;
+        }
+
+        #results {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+
+        .result-item {
+            border-bottom: 1px solid #eee;
+            padding: 5px 0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .word {
+            font-weight: bold;
+        }
+
+        .tag {
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tokenização e Tagging de Frases</h1>
+    <form id="text-form">
+        <textarea name="text" required placeholder="Digite suas frases aqui..."></textarea>
+        <button type="submit">Processar</button>
+    </form>
+    <h2>Resultados:</h2>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('text-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/process', {
+                method: 'POST',
+                body: formData
+            });
+            const results = await response.json();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            results.forEach(sentence => {
+                for (const [word, tag] of Object.entries(sentence)) {
+                    resultsDiv.innerHTML += `<div class="result-item"><span class="word">${word}</span>: <span class="tag">${tag}</span></div>`;
+                }
+            });
+        };
+    </script>
+</body>
+</html>
