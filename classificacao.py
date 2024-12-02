@@ -6,43 +6,71 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import classification_report
 import nltk
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer, RSLPStemmer
+import string
 
 nltk.download('stopwords')
+nltk.download('omw-1.4')  
+nltk.download('wordnet') 
 
-#  Corpus de revisões 
+def preprocess_text(text):
+    lemmatizer = WordNetLemmatizer()  # Usando lematizador
+    stemmer = RSLPStemmer()  # Usando stemmer para o português
+    stop_words = stopwords.words('portuguese')
+    
+    # Converte para minúsculas
+    text = text.lower()
+    
+    # Remove pontuações
+    text = ''.join([char for char in text if char not in string.punctuation])
+    
+    # Tokeniza o texto
+    tokens = text.split()
+    
+    # Aplica lematização, stemização e remove stop words
+    tokens = [
+        stemmer.stem(lemmatizer.lemmatize(word))  # Primeiro lematiza, depois faz a stemização
+        for word in tokens if word not in stop_words
+    ]
+    
+    return ' '.join(tokens)
+
+# Corpus de revisões
 corpus = [
     "Adorei o produto, é excelente!",  # Positiva
     "Detestei, é horrível e não funciona.",  # Negativa
-    "Produto mediano, razoavel pelo preço.",  # Neutra
-    "Otima qualidade, recomendo muito!",  # Positiva
+    "Produto mediano, razoável pelo preço.",  # Neutra
+    "Ótima qualidade, recomendo muito!",  # Positiva
     "Terrível, não gostei nada.",  # Negativa
     "Cumpre o que promete, nada excepcional.",  # Neutra
-    "Fantastico, superou as expectativas!",  # Positiva
-    "Pessimo, nunca mais compro dessa marca.",  # Negativa
-    "Produto aceitavel, mas já vi melhores.",  # Neutra
+    "Fantástico, superou as expectativas!",  # Positiva
+    "Péssimo, nunca mais compro dessa marca.",  # Negativa
+    "Produto aceitável, mas já vi melhores.",  # Neutra
     "Maravilhoso, estou apaixonado!",  # Positiva
-    "Horrivel, muito abaixo do esperado.",  # Negativa
-    "É um produto ok, sem grandes surpresas.",  # Neutra
+    "Horrível, muito abaixo do esperado.",  # Negativa
+    "É um produto ok, sem grandes surpresas.",  # Neutra,
 ]
 labels = ["positiva", "negativa", "neutra", "positiva", "negativa", "neutra",
           "positiva", "negativa", "neutra", "positiva", "negativa", "neutra"]
 
+# Pré-processar o corpus
+preprocessed_corpus = [preprocess_text(review) for review in corpus]
+
 # Vetorização do texto
-stop_words = stopwords.words('portuguese')
-vectorizer = CountVectorizer(stop_words=stop_words, ngram_range=(1, 2))
-X = vectorizer.fit_transform(corpus)
+vectorizer = CountVectorizer(ngram_range=(1, 2))
+X = vectorizer.fit_transform(preprocessed_corpus)
 y = labels
 
 # Divisão dos dados em treino e teste
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-#Treinamento dos modelos
+# Treinamento dos modelos
 # Multilayer Perceptron (MLP)
 mlp = MLPClassifier(hidden_layer_sizes=(10, 10), random_state=42, max_iter=1000)
 mlp.fit(X_train, y_train)
 
-# K-Nearest Neighbors (KNN)
-knn = KNeighborsClassifier(n_neighbors=5)
+# K-Nearest Neighbors (KNN) com número de vizinhos ajustado
+knn = KNeighborsClassifier(n_neighbors=3)  # Ajustei o número de vizinhos
 knn.fit(X_train, y_train)
 
 # Avaliação inicial dos modelos
@@ -66,17 +94,10 @@ with open("mlp_model.pkl", "rb") as mlp_file:
 with open("knn_model.pkl", "rb") as knn_file:
     loaded_knn = pickle.load(knn_file)
 
-# Exibindo somente 5 itens das informações dos modelos carregados
-# print("\nPrimeiros 5 coeficientes do modelo MLP carregado:")
-# # Exibe os primeiros 5 
-# print(loaded_mlp.coefs_[0][:5])
-# print("\nPrimeiras 5 amostras do modelo KNN carregado:")
-# # Exibe as 5 primeiras amostras de treinamento no modelo KNN
-# print(loaded_knn._fit_X[:5])
-
-# Entrada do usuário para classificação
-nova_revisao = input("Digite uma revisão para classificar: ")
-nova_revisao_vetorizada = vectorizer.transform([nova_revisao])
+# Entrada de uma nova revisão
+nova_revisao = input("Digite uma frase para classificar: ")
+nova_revisao_preprocessada = preprocess_text(nova_revisao)  # Pré-processa a nova revisão
+nova_revisao_vetorizada = vectorizer.transform([nova_revisao_preprocessada])
 
 # Classificando a nova revisão
 mlp_result = loaded_mlp.predict(nova_revisao_vetorizada)[0]
@@ -84,8 +105,3 @@ knn_result = loaded_knn.predict(nova_revisao_vetorizada)[0]
 
 print(f"\nClassificação MLP: {mlp_result}")
 print(f"Classificação KNN: {knn_result}")
-
-
-
-
-
